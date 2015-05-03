@@ -7,9 +7,12 @@ import java.awt.Robot;
 import java.awt.AWTException;
 import java.awt.image.BufferedImage;
 import java.awt.Rectangle;
+import java.awt.event.KeyEvent;
+import java.io.IOException;
 
 Robot robot;
 int barHeight = 42;
+boolean shouldTurn = false;
 
 void setup(){
   size(400,400);
@@ -22,15 +25,13 @@ void setup(){
 
 void draw(){
   BufferedImage screencapture = robot.createScreenCapture(
-  new Rectangle(570, 22, barHeight, barHeight));
+  new Rectangle(565, 22, barHeight, barHeight));
   
   PImage im = new PImage(screencapture);
   PImage edge = edgeDetect(im);
   PImage amp  = amplify(edge);
   PImage inv = invert(amp);
-  PImage bar = removeBars(inv);
-  PImage cir = removeOutside(bar);
-  
+  PImage cir = removeOutside(inv);
   
   background(200);
   stroke(0);
@@ -44,8 +45,6 @@ void draw(){
   image(amp, 100,(row++)*barHeight);
   text("Inverted:      ",0,12+(row)*barHeight);
   image(inv, 100,(row++)*barHeight);
-  text("No Bars:      ",0,12+(row)*barHeight);
-  image(bar, 100,(row++)*barHeight);
   text("Only Center",   0,12+(row)*barHeight);
   image(cir, 100,(row++)*barHeight);
   
@@ -68,7 +67,27 @@ void draw(){
   image(cir, 100,(row++)*barHeight);
   stroke(255,0,0);
   line(100+x0,(row-1)*barHeight+y0,100+x0+20*cos(maxTheta),(row-1)*barHeight+y0+20*sin(maxTheta));
-   
+  
+  stroke(0);
+  fill(shouldTurn ? color(0,255,0) : color(255,0,0));
+  rect(20,height-25,100,20);
+  fill(0);
+  text("turning:" + (shouldTurn ? "yes" : "no"),30,height-10);
+  
+  if(shouldTurn){
+    if(abs(maxTheta) > TWO_PI/60){
+      robot.keyPress(KeyEvent.VK_RIGHT);
+      println("turning...");
+    } else {
+      robot.keyRelease(KeyEvent.VK_RIGHT);
+    }
+  }
+  
+}
+
+void mouseClicked(){
+  if(mouseX > 20 && mouseX < 120 && mouseY > height-25 && mouseY < height-5)
+    shouldTurn = !shouldTurn;
 }
 
 /**
@@ -91,7 +110,7 @@ PImage removeBars(PImage im){
 PImage removeOutside(PImage im){
   float x0 = im.width/2.0;
   float y0 = im.height/2.0;
-  float radius = 9;
+  float radius = 8;
   PImage copy = im.get();
   copy.loadPixels();
   for(int x = 0; x < copy.width; x++){
