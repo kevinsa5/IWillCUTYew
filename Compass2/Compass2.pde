@@ -25,7 +25,7 @@ void setup(){
 
 void draw(){
   BufferedImage screencapture = robot.createScreenCapture(
-  new Rectangle(567, 22, barHeight, barHeight));
+  new Rectangle(570, 22, barHeight, barHeight));
   
   PImage im = new PImage(screencapture);
 
@@ -106,11 +106,12 @@ void draw(){
   text("turning:" + (shouldTurn ? "yes" : "no"),30,height-10);
   
   if(shouldTurn){
-    if(abs(theta - PI/2) > TWO_PI/120){
+    if(abs(theta + PI/2) > TWO_PI/120){
       robot.keyPress(KeyEvent.VK_RIGHT);
       println("turning..." + theta);
     } else {
       robot.keyRelease(KeyEvent.VK_RIGHT);
+      shouldTurn = false;
     }
   }
   
