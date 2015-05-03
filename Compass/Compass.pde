@@ -1,3 +1,4 @@
+// kinda crappy detection of which direction is north on the map
 // requires the window to be in the upper left corner
 // makes assumptions about window title bar height, etc.
 
@@ -8,9 +9,7 @@ import java.awt.image.BufferedImage;
 import java.awt.Rectangle;
 
 Robot robot;
-
-int barHeight = 17;
-int barWidth = 300;
+int barHeight = 42;
 
 void setup(){
   size(400,400);
@@ -23,14 +22,14 @@ void setup(){
 
 void draw(){
   BufferedImage screencapture = robot.createScreenCapture(
-  new Rectangle(33, 29, barWidth, barHeight));
+  new Rectangle(570, 22, barHeight, barHeight));
   
   PImage im = new PImage(screencapture);
   PImage edge = edgeDetect(im);
   PImage amp  = amplify(edge);
   PImage inv = invert(amp);
-  PImage iso = removeIsolates(inv);
-  PImage bar = removeBars(iso);
+  PImage bar = removeBars(inv);
+  PImage cir = removeOutside(bar);
   
   
   background(200);
@@ -45,41 +44,31 @@ void draw(){
   image(amp, 100,(row++)*barHeight);
   text("Inverted:      ",0,12+(row)*barHeight);
   image(inv, 100,(row++)*barHeight);
-  text("No Isolates:      ",0,12+(row)*barHeight);
-  image(iso, 100,(row++)*barHeight);
   text("No Bars:      ",0,12+(row)*barHeight);
   image(bar, 100,(row++)*barHeight);
+  text("Only Center",   0,12+(row)*barHeight);
+  image(cir, 100,(row++)*barHeight);
   
-  
-  row++;
-  PImage sim = simplify(im);
-  edge = edgeDetect(sim);
-  amp  = amplify(edge);
-  inv = invert(amp);
-  text("Simplified:    ",0,12+(row)*barHeight);
-  image(sim, 100,(row++)*barHeight);
-  text("Edge Detected: ",0,12+(row)*barHeight);
-  image(edge,100,(row++)*barHeight);
-  text("Amplified:     ",0,12+(row)*barHeight);
-  image(amp, 100,(row++)*barHeight);
-  text("Inverted:      ",0,12+(row)*barHeight);
-  image(inv, 100,(row++)*barHeight);
-  
-  /*
-  stroke(255,0,0);
-  for(int i = 0; i < width; i++){
-    int sum = 0;
-    for(int j = 0; j < barHeight; j++){
-      sum += gray(im.get(i,j));
-    }
-
-    if(sum == 0){
-      point(i,barHeight+3);
-      point(i,barHeight+2);
-      point(i,barHeight+1);
+  float maxTheta = 0;
+  float maxRadius = 0;
+  float x0 = cir.width/2.0;
+  float y0 = cir.height/2.0;
+  for(int x = 0; x < cir.width; x++){
+    for(int y = 0; y < cir.height; y++){
+      if(cir.get(x,y) == color(255)) continue;
+      float testRadius = sqrt((x-x0)*(x-x0) + (y-y0)*(y-y0));
+      if(testRadius > maxRadius){
+        maxRadius = testRadius;
+        maxTheta = new PVector(x-x0,y-y0).heading();
+      }
     }
   }
-  */
+  
+  text("Heading:"+maxTheta,   0,12+(row)*barHeight);
+  image(cir, 100,(row++)*barHeight);
+  stroke(255,0,0);
+  line(100+x0,(row-1)*barHeight+y0,100+x0+20*cos(maxTheta),(row-1)*barHeight+y0+20*sin(maxTheta));
+   
 }
 
 /**
@@ -97,44 +86,18 @@ PImage removeBars(PImage im){
 }
 
 /**
-  Removes isolated black pixels (black pixels with no black neighbors)
+  Removes pixels farther from the center than a radius r
 */
-PImage removeIsolates(PImage im){
+PImage removeOutside(PImage im){
+  float x0 = im.width/2.0;
+  float y0 = im.height/2.0;
+  float radius = 9;
   PImage copy = im.get();
   copy.loadPixels();
   for(int x = 0; x < copy.width; x++){
     for(int y = 0; y < copy.height; y++){
-      if(im.get(x,y) != color(0)) continue;
-      int numNeighbors = 0;
-      for(int dx = -1; dx <= 1; dx++){
-        for(int dy = -1; dy <= 1; dy++){
-          if(dx == 0 && dy == 0) continue;
-          if(x + dx >= 0 && x + dx < copy.width && y + dy >= 0 && y + dy < copy.height){
-            numNeighbors += im.get(x+dx,y+dy) == color(0) ? 1 : 0;
-          }
-        }
-      }
-      if(numNeighbors < 2) copy.set(x,y,color(255));
+      if((x-x0)*(x-x0) + (y-y0)*(y-y0) > radius*radius) copy.set(x,y,color(255));
     }
-  }
-  copy.updatePixels();
-  return copy;
-}
-  
-
-/**
-  Reduces the color values of an image to n possibles for R,G,B (from 256)
-*/
-PImage simplify(PImage im){
-  int n = 4;
-  int p = 256 / n;
-  PImage copy = im.get();
-  copy.loadPixels();
-  for(int i = 0; i < copy.pixels.length; i++){
-    int r = ((((((int)red(copy.pixels[i]))*256)/p)/256)*p);
-    int g = ((((((int)green(copy.pixels[i]))*256)/p)/256)*p);
-    int b = ((((((int)blue(copy.pixels[i]))*256)/p)/256)*p);
-    copy.pixels[i] = color(r,g,b);
   }
   copy.updatePixels();
   return copy;
