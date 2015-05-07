@@ -14,6 +14,7 @@ int barWidth = 300;
 
 void setup(){
   size(400,400);
+  frameRate(30);
   try {
       robot = new Robot();
   } catch (AWTException e) {
@@ -49,7 +50,64 @@ void draw(){
   image(iso, 100,(row++)*barHeight);
   text("No Bars:      ",0,12+(row)*barHeight);
   image(bar, 100,(row++)*barHeight);
+  //text("Space Separation:      ",0,12+(row)*barHeight);
+  //image(bar, 100,(row++)*barHeight);
   
+  stroke(255,0,0);
+  int characterStart = -1;
+  int ncleans = 0;
+  ArrayList<PImage> characters = new ArrayList<PImage>();
+  for(int x = 0; x < bar.width; x++){
+    boolean clean = true;
+    for(int y = 0; y < bar.height; y++){
+      if(bar.get(x,y) == color(0)){
+        clean = false;
+        break;
+      }
+    }
+    if(!clean && characterStart == -1){
+      characterStart = x;
+      if(ncleans > 3){
+        PImage temp = bar.get(x-ncleans,0,ncleans,bar.height);
+        characters.add(temp);
+      }
+      ncleans = 0;
+    }
+    if(clean && characterStart != -1){
+      PImage temp = bar.get(characterStart,0,(x-characterStart),bar.height);
+      if(temp.width > 1)
+        characters.add(temp);
+      characterStart = -1;
+    }
+    if(clean && characterStart == -1){
+      ncleans++;
+    }
+    
+    
+    
+  }
+  int tx = 0;
+  row++;
+  for(int i = 0; i < characters.size(); i++){
+     image(characters.get(i), tx, row*barHeight);
+     tx += characters.get(i).width + 5;
+  }
+  row++;
+
+  if(characters.size() > 0){
+    PImage raw = characters.get(0);
+    PImage p = createImage(8,10,RGB);
+    p.filter(THRESHOLD,0.0);
+    int wide = raw.width > 8 ? 8 : raw.width;
+    int high = raw.height > 10 ? 10 : raw.height;
+    println(wide + " " + high);
+    p.set((8 - wide)/2,0,raw.get(0,3,wide,high));
+    image(p,70,row*barHeight);
+    if(p.width == 8 && p.height == 10){
+      text(match(p),100,(row+1)*barHeight);
+    }
+  }
+  row++;
   
   row++;
   PImage sim = simplify(im);
@@ -120,7 +178,6 @@ PImage removeIsolates(PImage im){
   copy.updatePixels();
   return copy;
 }
-  
 
 /**
   Reduces the color values of an image to n possibles for R,G,B (from 256)

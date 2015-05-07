@@ -24,11 +24,17 @@ void setup(){
     startx++;
     c = robot.getPixelColor(startx,100);
   }
+  if(startx >= 300){
+    println("Couldn't find the window!!!");
+  }
   starty = 100;
   c = robot.getPixelColor(startx-1,starty);
   while(starty > 0 && color(c.getRed(), c.getGreen(), c.getBlue()) == color(0)){
     starty--;
     c = robot.getPixelColor(startx-1,starty);
+  }
+  if(starty <= 0){
+    println("Couldn't find the window!!!");
   }
   
 }

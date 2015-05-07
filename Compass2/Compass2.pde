@@ -74,7 +74,7 @@ void draw(){
   
   text("Lines:" ,0,12+(row)*barHeight);
   image(im,100,(row++)*barHeight);
-
+  if(filtered.size() < 3) return;
   PVector center = new PVector(im.width/2,im.height/2);
   float a = PVector.sub(filtered.get(0),center).heading();
   float b = PVector.sub(filtered.get(1),center).heading();
