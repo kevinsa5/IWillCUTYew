@@ -6,17 +6,24 @@ char match(PImage im){
   int[] pix = new int[im.pixels.length];
   for(int i = 0; i < pix.length; i++)
     pix[i] = im.pixels[i] == color(0) ? 1 : 0;
-  float c = multiplyAndSum(C_arr, pix) / total(C_arr);
-  float u = multiplyAndSum(U_arr, pix) / total(U_arr);
-  float w = multiplyAndSum(W_arr, pix) / total(W_arr);
-  println("C: "+c +" W: "+w+" U:"+u);
-  float m = max(max(c,w),u);
-  if(c == m) return 'C';
-  if(u == m) return 'U';
-  if(w == m) return 'W';
-  return '?';
+  float[] ranks = new float[characterArrays.size()];
+  for(int i = 0; i < ranks.length; i++){
+    ranks[i] = multiplyAndSum(characterArrays.get(i), pix) / total(characterArrays.get(i));
+  }
+  return characterValues.get(arrayMaxIndex(ranks));
 }
 
+int arrayMaxIndex(float[] a){
+  float val = a[0];
+  int imax = 0;
+  for(int i = 0; i < a.length; i++){
+    if(a[i] > val){
+      val = a[i];
+      imax = i;
+    }
+  }
+  return imax;
+}
 
 float multiplyAndSum(float[] a, int[] b){
   float s = 0;

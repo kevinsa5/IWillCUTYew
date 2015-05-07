@@ -12,6 +12,10 @@ Robot robot;
 int barHeight = 17;
 int barWidth = 300;
 
+ArrayList<float[]> characterArrays = new ArrayList<float[]>();
+ArrayList<Character> characterValues = new ArrayList<Character>();
+
+
 void setup(){
   size(400,400);
   frameRate(30);
@@ -20,6 +24,7 @@ void setup(){
   } catch (AWTException e) {
       e.printStackTrace();
   }
+  addCharacterValues();
 }
 
 void draw(){
@@ -90,10 +95,20 @@ void draw(){
   row++;
   for(int i = 0; i < characters.size(); i++){
      image(characters.get(i), tx, row*barHeight);
+     PImage raw = characters.get(i);
+     PImage p = createImage(8,10,RGB);
+     p.filter(THRESHOLD,0.0);
+     int wide = raw.width > 8 ? 8 : raw.width;
+     int high = raw.height > 10 ? 10 : raw.height;
+     p.set((8 - wide)/2,0,raw.get(0,3,wide,high));
+     image(p,70,row*barHeight);
+     if(p.width == 8 && p.height == 10){
+       text(match(p),tx,(row+1.7)*barHeight);
+     }
      tx += characters.get(i).width + 5;
   }
   row++;
-
+  /*
   if(characters.size() > 0){
     PImage raw = characters.get(0);
     PImage p = createImage(8,10,RGB);
@@ -108,7 +123,7 @@ void draw(){
     }
   }
   row++;
-  
+  */
   row++;
   PImage sim = simplify(im);
   edge = edgeDetect(sim);
