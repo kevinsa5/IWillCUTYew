@@ -26,14 +26,20 @@ public void createGUI(){
     frame.setTitle("Sketch Window");
   label1 = new GLabel(this, 10, 10, 50, 20);
   label1.setText("Action:");
-  label1.setOpaque(false);
-  lblAction = new GLabel(this, 60, 10, 280, 20);
+  label1.setOpaque(true);
+  lblAction = new GLabel(this, 70, 10, 270, 20);
   lblAction.setTextAlign(GAlign.LEFT, GAlign.MIDDLE);
-  lblAction.setOpaque(false);
+  lblAction.setOpaque(true);
   compass = new GSketchPad(this, 350, 10, 42, 42);
-  lblHeading = new GLabel(this, 340, 50, 60, 20);
+  lblHeading = new GLabel(this, 350, 50, 50, 20);
   lblHeading.setTextAlign(GAlign.LEFT, GAlign.MIDDLE);
   lblHeading.setOpaque(false);
+  lblMatch = new GLabel(this, 70, 40, 270, 20);
+  lblMatch.setTextAlign(GAlign.LEFT, GAlign.MIDDLE);
+  lblMatch.setOpaque(true);
+  label2 = new GLabel(this, 10, 40, 50, 20);
+  label2.setText("Match:");
+  label2.setOpaque(true);
 }
 
 // Variable declarations 
@@ -42,4 +48,6 @@ GLabel label1;
 GLabel lblAction; 
 GSketchPad compass; 
 GLabel lblHeading; 
+GLabel lblMatch; 
+GLabel label2; 
 

@@ -14,5 +14,6 @@ void setup() {
 void draw() {
   background(200);
   bot.updateGui();
+  //bot.mouseGrid();
 }
 
