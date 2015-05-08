@@ -17,12 +17,16 @@ class Bot
   final int COMPASS_WIDTH = 42;
   final int VIEW_WIDTH = 512;
   final int VIEW_HEIGHT = 335;
+  final int COMPASS_X = 532;
+  final int COMPASS_Y = -4; 
   final String[] knownWords = {
+    "",
     "Chop down Tree / 2 more options", 
     "Chop down Oak / 2 more options", 
     "Chop down Willow / 2 more options", 
     "Chop down Yew / 2 more options", 
     "Walk here", 
+    "Walk here / 1 more option",
     "Wield Rune axe / 3 more options", 
     "Use Yew logs / 2 more options",
     "Attack Goblin (level-2) / 2 more options",
@@ -46,7 +50,26 @@ class Bot
       e.printStackTrace();
     }
     ocr = new OCR();
-    scanVelocity = new PVector(2,-2);
+    scanVelocity = new PVector(4,-4);
+  }
+  
+  void updateGui() {
+    fill(0);
+    String s = updateAction();
+    lblAction.setText(s);
+    closestMatch = closestMatch(s);
+    lblMatch.setText(closestMatch);
+    updateHeading();
+    updateGameScreen();
+  }
+  
+  void updateGameScreen(){
+    PImage im = getImage(0,0,VIEW_WIDTH,VIEW_HEIGHT);
+    PGraphics graph = createGraphics(VIEW_WIDTH, VIEW_HEIGHT);
+    graph.beginDraw();
+    graph.image(im,0,0);
+    graph.endDraw();
+    padGame.setGraphic(graph);
   }
 
   void mouseGrid() {
@@ -85,29 +108,8 @@ class Bot
   
   }
 
-  void updateGui() {
-    fill(0);
-    String s = updateAction();
-    lblAction.setText(s);
-    closestMatch = knownWords[0];
-    int distance = levenshtein(s, closestMatch);
-    for (int i = 1; i < knownWords.length; i++) {
-      int d = levenshtein(s, knownWords[i]);
-      if (d < distance) {
-        distance = d;
-        closestMatch = knownWords[i];
-      }
-    }
-    lblMatch.setText(closestMatch);
-    updateHeading();
-  }
-
   void updateHeading() {
-    PVector origin = getWindowOrigin();
-    BufferedImage screencapture = robot.createScreenCapture(
-    new Rectangle((int)origin.x+532, (int)origin.y -4, COMPASS_WIDTH, COMPASS_WIDTH));
-
-    PImage im = new PImage(screencapture);
+    PImage im = getImage(COMPASS_X, COMPASS_Y, COMPASS_WIDTH, COMPASS_WIDTH);
     stroke(0);
     fill(0);
     int row = 0;
@@ -182,9 +184,7 @@ class Bot
   }
 
   String updateAction() {
-    PVector o = getWindowOrigin();
-    BufferedImage screencapture = robot.createScreenCapture(new Rectangle((int)o.x-1, (int)o.y+3, ACTION_BAR_WIDTH, ACTION_BAR_HEIGHT));
-    currentAction = ocr.matchString(new PImage(screencapture));
+    currentAction = ocr.matchString(getImage(-1,3,ACTION_BAR_WIDTH,ACTION_BAR_HEIGHT));
     return currentAction;
   }
 
@@ -197,6 +197,19 @@ class Bot
   }
   float getCurrentHeading() {
     return currentHeading;
+  }
+  
+  String closestMatch(String s){
+    String closestMatch = knownWords[0];
+    int distance = levenshtein(s, closestMatch);
+    for (int i = 1; i < knownWords.length; i++) {
+      int d = levenshtein(s, knownWords[i]);
+      if (d < distance) {
+        distance = d;
+        closestMatch = knownWords[i];
+      }
+    }
+    return closestMatch;
   }
 
   int levenshtein(String a, String b) {
@@ -219,6 +232,13 @@ class Bot
       }
     }
     return costs[b.length()];
+  }
+  PImage getImage(int x, int y, int wide, int high){
+    PVector o = getWindowOrigin();
+    return getImageAbsolute((int)o.x + x, (int)o.y + y, wide, high);
+  }
+  PImage getImageAbsolute(int x, int y, int wide, int high){
+    return new PImage(robot.createScreenCapture(new Rectangle(x,y,wide,high)));
   }
 }
 

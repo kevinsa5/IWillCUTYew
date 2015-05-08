@@ -114,7 +114,6 @@ class OCR
     for (int i = 0; i < template.pixels.length; i++) {
       arr[i] = template.pixels[i] == color(0) ? 1.0 : 0.0;
     }
-    template.save("foo"+s);
     return arr;
   }
 

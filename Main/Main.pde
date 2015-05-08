@@ -6,14 +6,15 @@ import g4p_controls.*;
 Bot bot;
 
 void setup() {
-  size(400, 400);
+  size(600, 500);
   createGUI();
-  frameRate(30);
+  frameRate(40);
   bot = new Bot();
 }
+
 void draw() {
   background(200);
   bot.updateGui();
-  //bot.mouseGrid();
+  bot.mouseGrid();
 }
 
