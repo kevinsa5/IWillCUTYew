@@ -104,6 +104,8 @@ class OCR
   }
 
   float[] makeArray(String s) {
+    File f = new File(dataPath(s));
+    if(!f.exists()) return null;
     PImage p = loadImage(s);
     if (p == null) return null;
     PImage template = createImage(8, 17, RGB);

@@ -40,7 +40,9 @@ public void createGUI(){
   label2 = new GLabel(this, 10, 40, 50, 20);
   label2.setText("Match:");
   label2.setOpaque(true);
-  padGame = new GSketchPad(this, 50, 100, 512, 335);
+  padGame = new GSketchPad(this, 50, 100, 260, 170);
+  lblFPS = new GLabel(this, 325, 274, 120, 20);
+  lblFPS.setOpaque(false);
 }
 
 // Variable declarations 
@@ -52,4 +54,5 @@ GLabel lblHeading;
 GLabel lblMatch; 
 GLabel label2; 
 GSketchPad padGame; 
+GLabel lblFPS; 
 

@@ -15,10 +15,12 @@ class Bot
   final int ACTION_BAR_HEIGHT = 17;
   final int ACTION_BAR_WIDTH = 300;
   final int COMPASS_WIDTH = 42;
-  final int VIEW_WIDTH = 512;
-  final int VIEW_HEIGHT = 335;
-  final int COMPASS_X = 532;
-  final int COMPASS_Y = -4; 
+  final int VIEW_WIDTH = 520;
+  final int VIEW_HEIGHT = 340;
+  final int COMPASS_X = 540;
+  final int COMPASS_Y = 0; 
+  final int INVENTORY_X = 550;
+  final int INVENTORY_Y = 210;
   final String[] knownWords = {
     "",
     "Chop down Tree / 2 more options", 
@@ -28,6 +30,9 @@ class Bot
     "Walk here", 
     "Walk here / 1 more option",
     "Wield Rune axe / 3 more options", 
+    "Use Logs / 2 more options",
+    "Use Oak logs / 2 more options",
+    "Use Willow logs / 2 more options",
     "Use Yew logs / 2 more options",
     "Attack Goblin (level-2) / 2 more options",
     "Take Coins / 4 more options",
@@ -38,9 +43,11 @@ class Bot
   float currentHeading = 0;
   String currentAction = "";
   String closestMatch = "";
-  PVector scanVelocity;
+  float scanRadius = 1;
+  float scanAngle = 0;
   int clickDelay = 5000;
-  int lastClick = 0;
+  int lastClick = -clickDelay;
+  PVector origin;
 
   Bot() {
     try {
@@ -50,7 +57,8 @@ class Bot
       e.printStackTrace();
     }
     ocr = new OCR();
-    scanVelocity = new PVector(4,-4);
+    origin = findWindowOrigin();
+    //scanVelocity = new PVector(4,-4);
   }
   
   void updateGui() {
@@ -61,19 +69,51 @@ class Bot
     lblMatch.setText(closestMatch);
     updateHeading();
     updateGameScreen();
+    if(frameCount % 30 == 0)
+      lblFPS.setText(frameRate + " FPS");
   }
   
   void updateGameScreen(){
     PImage im = getImage(0,0,VIEW_WIDTH,VIEW_HEIGHT);
-    PGraphics graph = createGraphics(VIEW_WIDTH, VIEW_HEIGHT);
+    im.resize(VIEW_WIDTH/2,VIEW_HEIGHT/2);
+    PGraphics graph = createGraphics(VIEW_WIDTH/2, VIEW_HEIGHT/2);
     graph.beginDraw();
     graph.image(im,0,0);
     graph.endDraw();
     padGame.setGraphic(graph);
   }
+  
+  void dropItems(){
+    Point p = MouseInfo.getPointerInfo().getLocation();
+    PVector o = windowOrigin();
+    if(closestMatch.equals("Use Oak logs / 2 more options")){
+      robot.mousePress(InputEvent.BUTTON3_MASK);
+      robot.delay(100);
+      robot.mouseRelease(InputEvent.BUTTON3_MASK);
+      robot.delay(100);
+      robot.mouseMove((int)p.getX(), (int)p.getY()+40);
+      robot.delay(100);
+      robot.mousePress(InputEvent.BUTTON1_MASK);
+      robot.delay(100);
+      robot.mouseRelease(InputEvent.BUTTON1_MASK);
+      robot.delay(200);
+      robot.mouseMove((int)p.getX(), (int)p.getY());
+      robot.delay(500);
+      return ;
+    } else {
+      if(p.getX() < o.x + INVENTORY_X + 180){
+        robot.mouseMove((int)p.getX() + 5,(int) p.getY()); 
+      } else {
+        robot.mouseMove((int) o.x + INVENTORY_X + 20, (int) p.getY() + 35);
+      }
+      if(p.getX() < o.x + INVENTORY_X || p.getY() > INVENTORY_Y + 320 || p.getY() < INVENTORY_Y){
+        robot.mouseMove((int) o.x + INVENTORY_X + 20, (int) o.y + INVENTORY_Y + 20);
+      }
+    }
+  }
 
   void mouseGrid() {
-    if(closestMatch.equals("Chop down Tree / 2 more options")){
+    if(closestMatch.equals("Chop down Oak / 2 more options")){
       if(millis() - lastClick > clickDelay){
         lastClick = millis();
         robot.mousePress(InputEvent.BUTTON1_MASK);
@@ -82,30 +122,15 @@ class Bot
       }
       return;
     }
-    PointerInfo pi = MouseInfo.getPointerInfo();
-    Point p = pi.getLocation();
-    PVector absolutePos = new PVector((float)p.getX(), (float)p.getY());
-    PVector relativePos = PVector.sub(absolutePos, getWindowOrigin());
-    if(relativePos.x > VIEW_WIDTH){
-      scanVelocity.x = -scanVelocity.x;
-      robot.mouseMove((int)(absolutePos.x  - 3), (int)absolutePos.y);
-    }
-    if(relativePos.x < 0){
-      scanVelocity.x = -scanVelocity.x;
-      robot.mouseMove((int)(absolutePos.x + 3), (int)absolutePos.y);
-    }
-    if(relativePos.y > VIEW_HEIGHT){
-      scanVelocity.y = -scanVelocity.y;
-      robot.mouseMove((int)absolutePos.x, (int)(absolutePos.y -3));
-    }
-    if(relativePos.y < 0){
-      println(absolutePos.y + "  " + relativePos.y);
-      scanVelocity.y = -scanVelocity.y;
-      robot.mouseMove((int)absolutePos.x, (int)(absolutePos.y +3));
-    }
-    
-    robot.mouseMove((int)(absolutePos.x + scanVelocity.x), (int) (absolutePos.y + scanVelocity.y));
-  
+    //if(millis() % 5000 < 1000) return;
+    robot.delay(10);
+    if(scanRadius > VIEW_HEIGHT/2) scanRadius = 10;
+    scanRadius += 0.5;
+    scanAngle += 10 / scanRadius;
+    PVector o = windowOrigin();
+    robot.mouseMove((int) (o.x + VIEW_WIDTH/2  + scanRadius*cos(scanAngle)), 
+                    (int) (o.y + VIEW_HEIGHT/2 + scanRadius*sin(scanAngle)));
+                    
   }
 
   void updateHeading() {
@@ -138,10 +163,7 @@ class Bot
       }
       if (different) filtered.add(p);
     }
-    if (filtered.size() < 3) {
-      println("Couldn't find the three reference points on the compass!");
-      return;
-    }
+
     PGraphics graph = createGraphics(COMPASS_WIDTH, COMPASS_WIDTH);
     graph.beginDraw();
     graph.image(im, 0, 0);
@@ -150,7 +172,12 @@ class Bot
     for (PVector p : filtered) {
       graph.ellipse(p.x, p.y, 5, 5);
     }
-
+    if (filtered.size() < 3) {
+      graph.endDraw();
+      compass.setGraphic(graph);
+      println("Couldn't find the three reference points on the compass!");
+      return;
+    }
     PVector center = new PVector(im.width/2, im.height/2);
     float a = PVector.sub(filtered.get(0), center).heading();
     float b = PVector.sub(filtered.get(1), center).heading();
@@ -184,12 +211,31 @@ class Bot
   }
 
   String updateAction() {
-    currentAction = ocr.matchString(getImage(-1,3,ACTION_BAR_WIDTH,ACTION_BAR_HEIGHT));
+    PImage p = getImage(9,7,ACTION_BAR_WIDTH,ACTION_BAR_HEIGHT); 
+    currentAction = ocr.matchString(p);
     return currentAction;
   }
 
-  PVector getWindowOrigin() {
-    return new PVector(34, 27);
+  PVector windowOrigin() {
+    return origin;
+  }
+  
+  PVector findWindowOrigin() {
+    BufferedImage screencapture = robot.createScreenCapture(
+    new Rectangle(0, 0, displayWidth, displayHeight));
+    PImage im = new PImage(screencapture);
+    int count = 0;
+    for (int i = 0; i < im.width; i++) {
+      for (int j = 0; j < im.height; j++) {
+        if (im.get(i,j) == color(76,189,78)) {
+          count++;
+          if (count == 5) {
+            return new PVector(i - 644, j - 473);
+          }
+        }
+      }
+    }
+    return null;
   }
 
   String getCurrentAction() {
@@ -234,7 +280,7 @@ class Bot
     return costs[b.length()];
   }
   PImage getImage(int x, int y, int wide, int high){
-    PVector o = getWindowOrigin();
+    PVector o = windowOrigin();
     return getImageAbsolute((int)o.x + x, (int)o.y + y, wide, high);
   }
   PImage getImageAbsolute(int x, int y, int wide, int high){

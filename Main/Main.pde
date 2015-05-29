@@ -6,7 +6,7 @@ import g4p_controls.*;
 Bot bot;
 
 void setup() {
-  size(600, 500);
+  size(450, 300);
   createGUI();
   frameRate(40);
   bot = new Bot();
@@ -15,6 +15,9 @@ void setup() {
 void draw() {
   background(200);
   bot.updateGui();
-  bot.mouseGrid();
+  if(frameCount % (4800+400) < 4800)
+    bot.mouseGrid();
+  else
+    bot.dropItems();
 }
 
