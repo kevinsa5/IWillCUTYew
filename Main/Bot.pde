@@ -22,21 +22,21 @@ class Bot
   final int INVENTORY_X = 550;
   final int INVENTORY_Y = 210;
   final String[] knownWords = {
-    "",
+    "", 
     "Chop down Tree / 2 more options", 
     "Chop down Oak / 2 more options", 
     "Chop down Willow / 2 more options", 
     "Chop down Yew / 2 more options", 
     "Walk here", 
-    "Walk here / 1 more option",
+    "Walk here / 1 more option", 
     "Wield Rune axe / 3 more options", 
-    "Use Logs / 2 more options",
-    "Use Oak logs / 2 more options",
-    "Use Willow logs / 2 more options",
-    "Use Yew logs / 2 more options",
-    "Attack Goblin (level-2) / 2 more options",
-    "Take Coins / 4 more options",
-    "Chop down Dead tree / 6 more options",
+    "Use Logs / 2 more options", 
+    "Use Oak logs / 2 more options", 
+    "Use Willow logs / 2 more options", 
+    "Use Yew logs / 2 more options", 
+    "Attack Goblin (level-2) / 2 more options", 
+    "Take Coins / 4 more options", 
+    "Chop down Dead tree / 6 more options", 
     "Take Body rune / 4 more options"
   };
 
@@ -48,6 +48,7 @@ class Bot
   int clickDelay = 5000;
   int lastClick = -clickDelay;
   PVector origin;
+  Thread actionThread;
 
   Bot() {
     try {
@@ -60,7 +61,7 @@ class Bot
     origin = findWindowOrigin();
     //scanVelocity = new PVector(4,-4);
   }
-  
+
   void updateGui() {
     fill(0);
     String s = updateAction();
@@ -69,68 +70,145 @@ class Bot
     lblMatch.setText(closestMatch);
     updateHeading();
     updateGameScreen();
-    if(frameCount % 30 == 0)
+    lblState.setText((actionThread == null || !actionThread.isAlive()) ? "Idle" : "Busy");
+    if (frameCount % 30 == 0)
       lblFPS.setText(frameRate + " FPS");
   }
-  
-  void updateGameScreen(){
-    PImage im = getImage(0,0,VIEW_WIDTH,VIEW_HEIGHT);
-    im.resize(VIEW_WIDTH/2,VIEW_HEIGHT/2);
+
+  void updateGameScreen() {
+    PImage im = getImage(0, 0, VIEW_WIDTH, VIEW_HEIGHT);
+    im.resize(VIEW_WIDTH/2, VIEW_HEIGHT/2);
     PGraphics graph = createGraphics(VIEW_WIDTH/2, VIEW_HEIGHT/2);
     graph.beginDraw();
-    graph.image(im,0,0);
+    graph.image(im, 0, 0);
     graph.endDraw();
     padGame.setGraphic(graph);
   }
-  
-  void dropItems(){
-    Point p = MouseInfo.getPointerInfo().getLocation();
-    PVector o = windowOrigin();
-    if(closestMatch.equals("Use Oak logs / 2 more options")){
-      robot.mousePress(InputEvent.BUTTON3_MASK);
-      robot.delay(100);
-      robot.mouseRelease(InputEvent.BUTTON3_MASK);
-      robot.delay(100);
-      robot.mouseMove((int)p.getX(), (int)p.getY()+40);
-      robot.delay(100);
-      robot.mousePress(InputEvent.BUTTON1_MASK);
-      robot.delay(100);
-      robot.mouseRelease(InputEvent.BUTTON1_MASK);
-      robot.delay(200);
-      robot.mouseMove((int)p.getX(), (int)p.getY());
-      robot.delay(500);
-      return ;
-    } else {
-      if(p.getX() < o.x + INVENTORY_X + 180){
-        robot.mouseMove((int)p.getX() + 5,(int) p.getY()); 
-      } else {
-        robot.mouseMove((int) o.x + INVENTORY_X + 20, (int) p.getY() + 35);
-      }
-      if(p.getX() < o.x + INVENTORY_X || p.getY() > INVENTORY_Y + 320 || p.getY() < INVENTORY_Y){
-        robot.mouseMove((int) o.x + INVENTORY_X + 20, (int) o.y + INVENTORY_Y + 20);
-      }
-    }
+
+  boolean isIdle() {
+    return (actionThread == null) || (!actionThread.isAlive());
   }
 
-  void mouseGrid() {
-    if(closestMatch.equals("Chop down Oak / 2 more options")){
-      if(millis() - lastClick > clickDelay){
-        lastClick = millis();
-        robot.mousePress(InputEvent.BUTTON1_MASK);
-        robot.delay(100);
-        robot.mouseRelease(InputEvent.BUTTON1_MASK);
-      }
-      return;
+  void spawnThread(Runnable r) {
+    if (!isIdle()) {
+      throw new RuntimeException("Tried to do more than one action at once!");
     }
-    //if(millis() % 5000 < 1000) return;
-    robot.delay(10);
-    if(scanRadius > VIEW_HEIGHT/2) scanRadius = 10;
-    scanRadius += 0.5;
-    scanAngle += 10 / scanRadius;
+    actionThread = new Thread(r);
+    actionThread.start();
+  }
+
+  void dropItems() {
+    Runnable r = new Runnable() { 
+      public void run() { 
+        Robot threadBot;
+        try {
+          threadBot = new Robot();
+        }
+        catch (AWTException e) {
+          e.printStackTrace();
+          return;
+        }
+        int itemWidth = 45;
+        int itemHeight = 35;
+        PVector o = windowOrigin();
+        for (int row = 0; row < 7; row++) {
+          for (int col = 0; col < 4; col++) {
+            int tx = (int)o.x + INVENTORY_X + 20 + col*itemWidth;
+            int ty = (int)o.y + INVENTORY_Y + 20 + row*itemHeight;
+            threadBot.mouseMove(tx, ty);
+            threadBot.delay(100);
+            threadBot.mousePress(InputEvent.BUTTON3_MASK);
+            threadBot.delay(100);
+            threadBot.mouseRelease(InputEvent.BUTTON3_MASK);
+            threadBot.delay(200);
+            if (row < 6)
+              threadBot.mouseMove(tx, ty+40);
+            else
+              threadBot.mouseMove(tx, ty+20);
+            threadBot.mousePress(InputEvent.BUTTON1_MASK);
+            threadBot.delay(100);
+            threadBot.mouseRelease(InputEvent.BUTTON1_MASK);
+            threadBot.delay(200);
+          }
+        }
+      }
+    };
+    spawnThread(r);
+  }
+
+  void chopTree() {
+    final String tree = "Oak";
+    Runnable r = new Runnable() { 
+      public void run() { 
+        Robot threadBot;
+        PVector o = windowOrigin();
+        try {
+          threadBot = new Robot();
+        }
+        catch (AWTException e) {
+          e.printStackTrace();
+          return;
+        }
+        findTree(tree, threadBot);
+        //walk over to it
+        threadBot.delay(2000);
+        if (!closestMatch.equals("Chop down " + tree + " / 2 more options"))
+          findTree(tree, robot);
+        //now the mouse should be over it, and we should be next to it
+        while (true) {
+          while (closestMatch.equals ("Chop down " + tree + " / 2 more options")) {
+            threadBot.delay(500);
+            println("looking at tree " + millis());
+            //check for full inventory:
+            PImage im = getImage((int) INVENTORY_X + 155, 
+                                 (int) INVENTORY_Y + 230, 
+                                 2, 2);
+            color c = im.get(1, 1);
+            //this is the background color of this pixel
+            if (c != color(75, 66, 58)) {
+              println("Full inventory!");
+              return;
+            }
+            //check for "level up" message
+            //this is a pixel on the line in the chat box that gets covered
+            PImage im = getImageAbsolute(436, 531, 1, 1);
+            color c = im.get(0, 0);
+            if(c != color(128,118,96)){
+              println("Level up!");
+              break;
+            }
+          }
+          while (! closestMatch.equals ("Chop down " + tree + " / 2 more options")) {
+            threadBot.delay(500);
+            println("waiting for respawn " + millis());
+          }
+          println("clicking on tree " + millis());
+          threadBot.mousePress(InputEvent.BUTTON1_MASK);
+          threadBot.delay(100);
+          threadBot.mouseRelease(InputEvent.BUTTON1_MASK);
+        }
+      }
+    };
+    spawnThread(r);
+  }
+
+  void findTree(String tree, Robot robot) {
     PVector o = windowOrigin();
-    robot.mouseMove((int) (o.x + VIEW_WIDTH/2  + scanRadius*cos(scanAngle)), 
-                    (int) (o.y + VIEW_HEIGHT/2 + scanRadius*sin(scanAngle)));
-                    
+    for (int radius = 50; radius < VIEW_HEIGHT/2; radius+=50) {
+      for (int angle = 0; angle < 360; angle += 15) {
+        int dx = (int) (radius * cos(angle*PI/180));
+        int dy = (int) (radius * sin(angle*PI/180));
+        robot.mouseMove((int) o.x + VIEW_WIDTH/2+ dx, (int) o.y +VIEW_HEIGHT/2+ dy);
+        robot.delay(200);
+        if (closestMatch.equals("Chop down " + tree + " / 2 more options")) {
+          println("closest match!");
+          robot.mousePress(InputEvent.BUTTON1_MASK);
+          robot.delay(100);
+          robot.mouseRelease(InputEvent.BUTTON1_MASK);
+          return;
+        }
+      }
+    }
   }
 
   void updateHeading() {
@@ -211,7 +289,7 @@ class Bot
   }
 
   String updateAction() {
-    PImage p = getImage(9,7,ACTION_BAR_WIDTH,ACTION_BAR_HEIGHT); 
+    PImage p = getImage(9, 7, ACTION_BAR_WIDTH, ACTION_BAR_HEIGHT); 
     currentAction = ocr.matchString(p);
     return currentAction;
   }
@@ -219,7 +297,7 @@ class Bot
   PVector windowOrigin() {
     return origin;
   }
-  
+
   PVector findWindowOrigin() {
     BufferedImage screencapture = robot.createScreenCapture(
     new Rectangle(0, 0, displayWidth, displayHeight));
@@ -227,7 +305,7 @@ class Bot
     int count = 0;
     for (int i = 0; i < im.width; i++) {
       for (int j = 0; j < im.height; j++) {
-        if (im.get(i,j) == color(76,189,78)) {
+        if (im.get(i, j) == color(76, 189, 78)) {
           count++;
           if (count == 5) {
             return new PVector(i - 644, j - 473);
@@ -244,8 +322,8 @@ class Bot
   float getCurrentHeading() {
     return currentHeading;
   }
-  
-  String closestMatch(String s){
+
+  String closestMatch(String s) {
     String closestMatch = knownWords[0];
     int distance = levenshtein(s, closestMatch);
     for (int i = 1; i < knownWords.length; i++) {
@@ -279,12 +357,12 @@ class Bot
     }
     return costs[b.length()];
   }
-  PImage getImage(int x, int y, int wide, int high){
+  PImage getImage(int x, int y, int wide, int high) {
     PVector o = windowOrigin();
     return getImageAbsolute((int)o.x + x, (int)o.y + y, wide, high);
   }
-  PImage getImageAbsolute(int x, int y, int wide, int high){
-    return new PImage(robot.createScreenCapture(new Rectangle(x,y,wide,high)));
+  PImage getImageAbsolute(int x, int y, int wide, int high) {
+    return new PImage(robot.createScreenCapture(new Rectangle(x, y, wide, high)));
   }
 }
 

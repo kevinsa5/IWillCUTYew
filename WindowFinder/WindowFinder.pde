@@ -16,6 +16,7 @@ int yfound = 0;
 
 
 void setup(){
+  size(520,340);
   try {
       robot = new Robot();
   } catch (AWTException e) {
@@ -28,10 +29,8 @@ void setup(){
   int count = 0;
   for (int i = 0; i < im.width; i++) {
     for (int j = 0; j < im.height; j++) {
-      if (im.get(i,j) == door.get(0,0)) {
+      if (im.get(i,j) == color(76,189,78)) {
         count++;
-        System.out.println(i);
-        System.out.println(j);
         if (count == 5) {
           xfound = i - 644;
           yfound = j - 473;
@@ -39,8 +38,6 @@ void setup(){
       }
     }
   }
-  System.out.println(count);
-  size(400,400);
 }
 
 

@@ -14,6 +14,16 @@
  * =========================================================
  */
 
+public void btnDrop_press(GButton source, GEvent event) { //_CODE_:btnDrop:625097:
+  //println("button1 - GButton >> GEvent." + event + " @ " + millis());
+  bot.dropItems();
+} //_CODE_:btnDrop:625097:
+
+public void btnChop_press(GButton source, GEvent event) { //_CODE_:btnChop:426480:
+  //println("btnChop - GButton >> GEvent." + event + " @ " + millis());
+  bot.chopTree();
+} //_CODE_:btnChop:426480:
+
 
 
 // Create all the GUI controls. 
@@ -25,7 +35,7 @@ public void createGUI(){
   if(frame != null)
     frame.setTitle("Sketch Window");
   label1 = new GLabel(this, 10, 10, 50, 20);
-  label1.setText("Action:");
+  label1.setText("String:");
   label1.setOpaque(true);
   lblAction = new GLabel(this, 70, 10, 270, 20);
   lblAction.setTextAlign(GAlign.LEFT, GAlign.MIDDLE);
@@ -40,9 +50,21 @@ public void createGUI(){
   label2 = new GLabel(this, 10, 40, 50, 20);
   label2.setText("Match:");
   label2.setOpaque(true);
-  padGame = new GSketchPad(this, 50, 100, 260, 170);
+  padGame = new GSketchPad(this, 25, 101, 260, 170);
   lblFPS = new GLabel(this, 325, 274, 120, 20);
   lblFPS.setOpaque(false);
+  label3 = new GLabel(this, 342, 73, 73, 21);
+  label3.setText("Bot State:");
+  label3.setOpaque(false);
+  lblState = new GLabel(this, 401, 74, 44, 20);
+  lblState.setText("Idle");
+  lblState.setOpaque(false);
+  btnDrop = new GButton(this, 340, 150, 80, 30);
+  btnDrop.setText("Drop Items");
+  btnDrop.addEventHandler(this, "btnDrop_press");
+  btnChop = new GButton(this, 340, 110, 80, 30);
+  btnChop.setText("Chop Tree");
+  btnChop.addEventHandler(this, "btnChop_press");
 }
 
 // Variable declarations 
@@ -55,4 +77,8 @@ GLabel lblMatch;
 GLabel label2; 
 GSketchPad padGame; 
 GLabel lblFPS; 
+GLabel label3; 
+GLabel lblState; 
+GButton btnDrop; 
+GButton btnChop; 
 
