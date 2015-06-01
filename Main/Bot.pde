@@ -171,8 +171,8 @@ class Bot
             }
             //check for "level up" message
             //this is a pixel on the line in the chat box that gets covered
-            PImage im = getImageAbsolute(436, 531, 1, 1);
-            color c = im.get(0, 0);
+            im = getImageAbsolute(436, 531, 1, 1);
+            c = im.get(0, 0);
             if(c != color(128,118,96)){
               println("Level up!");
               break;

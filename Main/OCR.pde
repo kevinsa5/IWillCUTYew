@@ -80,13 +80,13 @@ class OCR
   void generateCharacterArrays() {
     PImage template = createImage(8, 17, RGB);
     for (char c = 'a'; c <= 'z'; c++) {
-      float[] arr = makeArray(c + ".png");
+      float[] arr = makeArray("small-"+ c + ".png");
       if (arr == null) continue;
       characterArrays.add(arr);
       characterValues.add(c);
     }
     for (char c = 'A'; c <= 'Z'; c++) {
-      float[] arr = makeArray(c + ".png");
+      float[] arr = makeArray("big-" + char('a' + (c-'A')) + ".png");
       if (arr == null) continue;
       characterArrays.add(arr);
       characterValues.add(c);
