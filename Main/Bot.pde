@@ -303,9 +303,19 @@ class Bot
     new Rectangle(0, 0, displayWidth, displayHeight));
     PImage im = new PImage(screencapture);
     int count = 0;
+    color doorColor;
+    String os = System.getProperty("os.name").toLowerCase();
+    if(os.contains("linux")){
+      doorColor = color(76, 189, 78);
+    } else if(os.contains("mac")){
+      //doorColor = something;
+    } else {
+      println("Your OS is not supported! Probably lots of errors will happen now. Oops.");
+      return;
+    }
     for (int i = 0; i < im.width; i++) {
       for (int j = 0; j < im.height; j++) {
-        if (im.get(i, j) == color(76, 189, 78)) {
+        if (im.get(i, j) == doorColor) {
           count++;
           if (count == 5) {
             return new PVector(i - 644, j - 473);
